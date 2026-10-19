@@ -1,0 +1,16 @@
+config.php
+.env
+
+uploads/*
+!uploads/.gitkeep
+access_cards/*
+!access_cards/.gitkeep
+
+.vscode/
+.idea/
+
+.DS_Store
+Thumbs.db
+desktop.ini
+
+*.log
