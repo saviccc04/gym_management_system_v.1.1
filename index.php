@@ -1,5 +1,36 @@
 <?php
     require_once "config.php";
+
+    if($_SERVER['REQUEST_METHOD'] == "POST") {
+        $username = $_POST['username'];
+        $password = $_POST['password'];
+
+        $sql = "SELECT username, password, admin_id FROM admins WHERE username = ?";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("s", $username);
+        $stmt->execute();
+
+        $result = $stmt->get_result();
+
+        if($result->num_rows === 1) {
+            $admin = $result->fetch_assoc();
+            
+            if(password_verify($password, $admin['password'])) {
+                $_SESSION['admin_id'] = $admin['admin_id'];
+
+                header('location: admin_dashboard.php');
+                exit();
+            } else {
+                $_SESSION['error_message'] = "Invalid username or password!";
+                header('location: index.php');
+                exit();
+            }
+        } else {
+            $_SESSION['error_message'] = "Invalid username or password!";
+            header('location: index.php');
+            exit();
+        }
+    }
 ?>
 
 <!DOCTYPE html>
@@ -16,7 +47,14 @@
             <div class="card-body p-4">
                 <h1 class="h3 text-center mb-4">Admin Login</h1>
 
-                <!-- <div class="alert alert-danger">Pogrešan username ili lozinka</div> -->
+                <?php if(isset($_SESSION['error_message'])): ?>
+                    <div class="alert alert-danger">
+                        <?php 
+                            echo $_SESSION['error_message'];
+                            unset($_SESSION['error_message']);
+                        ?>
+                    </div>
+                <?php endif; ?>
 
                 <form method="POST" action="">
                     <div class="mb-3">
