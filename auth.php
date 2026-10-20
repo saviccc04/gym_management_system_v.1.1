@@ -1,6 +1,7 @@
 <?php 
-
-    if(!isset($_SESSION['admin_id'])) {
-        header('location: index.php');
-        exit();
-    }
+    function redirect_if ($condition, $location) {
+        if($condition) {
+            header("location: $location");
+            exit();
+        }
+    };

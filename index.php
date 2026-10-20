@@ -1,10 +1,8 @@
 <?php
     require_once "config.php";
+    require_once "auth.php";
 
-    if(isset($_SESSION['admin_id'])) {
-        header('location: admin_dashboard.php');
-        exit();
-    }
+    redirect_if(isset($_SESSION['admin_id']), 'admin_dashboard.php');
 
     if($_SERVER['REQUEST_METHOD'] == "POST") {
         $username = $_POST['username'];
@@ -16,20 +14,14 @@
         $stmt->execute();
 
         $result = $stmt->get_result();
+        $admin = $result->fetch_assoc();
 
-        if($result->num_rows === 1) {
-            $admin = $result->fetch_assoc();
-            
-            if(password_verify($password, $admin['password'])) {
-                $_SESSION['admin_id'] = $admin['admin_id'];
+        if($result->num_rows === 1 && password_verify($password, $admin['password'])) {  
+            session_regenerate_id(true);          
+            $_SESSION['admin_id'] = $admin['admin_id'];
 
-                header('location: admin_dashboard.php');
-                exit();
-            } else {
-                $_SESSION['error_message'] = "Invalid username or password!";
-                header('location: index.php');
-                exit();
-            }
+            header('location: admin_dashboard.php');
+            exit();
         } else {
             $_SESSION['error_message'] = "Invalid username or password!";
             header('location: index.php');
@@ -55,7 +47,7 @@
                 <?php if(isset($_SESSION['error_message'])): ?>
                     <div class="alert alert-danger">
                         <?php 
-                            echo $_SESSION['error_message'];
+                            echo htmlspecialchars($_SESSION['error_message']);
                             unset($_SESSION['error_message']);
                         ?>
                     </div>
