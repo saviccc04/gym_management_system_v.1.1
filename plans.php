@@ -3,27 +3,32 @@
     require_once 'auth.php';
 
     redirect_if(!isset($_SESSION['admin_id']), 'index.php');
+    
+    if($_SERVER['REQUEST_METHOD'] == "POST") {
+        $training_name = trim($_POST['name']);
+       
+        if($training_name !== '') {
+            $sql = "INSERT INTO training_plans (name) VALUES (?)";
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param("s", $training_name);
+            $stmt->execute();
+
+            $_SESSION['success_message'] = "Plan added.";
+
+            header('location: plans.php');
+            exit();
+        } else {
+            $_SESSION['error_message'] = "Plan name is required.";
+
+            header('location: plans.php');
+            exit();
+        }
+    }
 
     $sql = "SELECT * FROM training_plans";
     $result = $conn->query($sql);
 
     $training_plans = $result->fetch_all(MYSQLI_ASSOC);
-
-    
-
-    if($_SERVER['REQUEST_METHOD'] == "POST") {
-        $training_name = trim($_POST['name']);
-       
-        $sql = "INSERT INTO training_plans (name) VALUES (?)";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("s", $training_name);
-        $stmt->execute();
-        
-        $_SESSION['success_message'] = "Plan added.";
-
-        header('location: plans.php');
-        exit();
-    }
 ?>
 <!DOCTYPE html>
 <html lang="bs">
@@ -47,7 +52,15 @@
                 ?>
             </div>
         <?php endif; ?>
-        <!-- <div class="alert alert-danger">This plan is used by members and can't be deleted.</div> -->
+
+        <?php if(isset($_SESSION['error_message'])): ?>
+            <div class="alert alert-danger">
+                <?php 
+                    echo htmlspecialchars($_SESSION['error_message']);
+                    unset($_SESSION['error_message']);
+                ?>
+            </div>
+        <?php endif; ?>
 
         <div class="row g-4">
             <div class="col-lg-4">
@@ -86,7 +99,7 @@
                                                 <td><?php echo htmlspecialchars($plan['name']) ; ?></td>
                                                 <td><?php echo htmlspecialchars(date("Y/m/d", strtotime($plan['created_at']))); ?></td>
                                                 <td class="text-end">
-                                                    <form method="POST" action="" class="d-inline">
+                                                    <form method="POST" action="delete_plan.php" class="d-inline">
                                                         <input type="hidden" name="delete_id" value="<?php echo htmlspecialchars($plan['plan_id']) ; ?>">
                                                         <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
                                                     </form>
