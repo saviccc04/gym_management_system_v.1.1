@@ -5,9 +5,25 @@
     redirect_if(!isset($_SESSION['admin_id']), 'index.php');
 
     $sql = "SELECT * FROM training_plans";
-    $results = $conn->query($sql);
+    $result = $conn->query($sql);
 
-    $training_plans = $results->fetch_all(MYSQLI_ASSOC);
+    $training_plans = $result->fetch_all(MYSQLI_ASSOC);
+
+    
+
+    if($_SERVER['REQUEST_METHOD'] == "POST") {
+        $training_name = trim($_POST['name']);
+       
+        $sql = "INSERT INTO training_plans (name) VALUES (?)";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("s", $training_name);
+        $stmt->execute();
+        
+        $_SESSION['success_message'] = "Plan added.";
+
+        header('location: plans.php');
+        exit();
+    }
 ?>
 <!DOCTYPE html>
 <html lang="bs">
@@ -23,8 +39,14 @@
     <div class="container">
         <h1 class="h3 mb-4">Training Plans</h1>
 
-        <!-- Flash poruke (uspjeh / greška) -->
-        <!-- <div class="alert alert-success">Plan added.</div> -->
+        <?php if(isset($_SESSION['success_message'])): ?>
+            <div class="alert alert-success">
+                <?php 
+                    echo htmlspecialchars($_SESSION['success_message']);
+                    unset($_SESSION['success_message']);
+                ?>
+            </div>
+        <?php endif; ?>
         <!-- <div class="alert alert-danger">This plan is used by members and can't be deleted.</div> -->
 
         <div class="row g-4">
@@ -57,18 +79,25 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <?php foreach($training_plans as $plan): ?>
+                                    <?php if(!empty($training_plans)): ?>
+
+                                        <?php foreach($training_plans as $plan): ?>
+                                            <tr>
+                                                <td><?php echo htmlspecialchars($plan['name']) ; ?></td>
+                                                <td><?php echo htmlspecialchars(date("Y/m/d", strtotime($plan['created_at']))); ?></td>
+                                                <td class="text-end">
+                                                    <form method="POST" action="" class="d-inline">
+                                                        <input type="hidden" name="delete_id" value="<?php echo htmlspecialchars($plan['plan_id']) ; ?>">
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                                    </form>
+                                                </td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    <?php else : ?>
                                         <tr>
-                                            <td><?php echo htmlspecialchars($plan['name']) ; ?></td>
-                                            <td><?php echo htmlspecialchars(date("Y/m/d", strtotime($plan['created_at']))); ?></td>
-                                            <td class="text-end">
-                                                <form method="POST" action="" class="d-inline">
-                                                    <input type="hidden" name="delete_id" value="<?php echo htmlspecialchars($plan['plan_id']) ; ?>">
-                                                    <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
-                                                </form>
-                                            </td>
+                                            <td colspan="3" class="text-center text-muted">No plans yet</td>
                                         </tr>
-                                    <?php endforeach; ?>
+                                    <?php endif; ?>
                                 </tbody>
                             </table>
                         </div>
