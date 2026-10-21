@@ -3,6 +3,11 @@
     require_once 'auth.php';
 
     redirect_if(!isset($_SESSION['admin_id']), 'index.php');
+
+    $sql = "SELECT * FROM training_plans";
+    $results = $conn->query($sql);
+
+    $training_plans = $results->fetch_all(MYSQLI_ASSOC);
 ?>
 <!DOCTYPE html>
 <html lang="bs">
@@ -52,17 +57,18 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <!-- Ovaj red ponavljaš u petlji za svaki plan iz baze -->
-                                    <tr>
-                                        <td>12 sessions plan</td>
-                                        <td>21.10.2026.</td>
-                                        <td class="text-end">
-                                            <form method="POST" action="" class="d-inline">
-                                                <input type="hidden" name="delete_id" value="1">
-                                                <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
-                                            </form>
-                                        </td>
-                                    </tr>
+                                    <?php foreach($training_plans as $plan): ?>
+                                        <tr>
+                                            <td><?php echo htmlspecialchars($plan['name']) ; ?></td>
+                                            <td><?php echo htmlspecialchars(date("Y/m/d", strtotime($plan['created_at']))); ?></td>
+                                            <td class="text-end">
+                                                <form method="POST" action="" class="d-inline">
+                                                    <input type="hidden" name="delete_id" value="<?php echo htmlspecialchars($plan['plan_id']) ; ?>">
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
                                 </tbody>
                             </table>
                         </div>
