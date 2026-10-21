@@ -13,6 +13,8 @@ if($_SERVER['REQUEST_METHOD'] == "POST") {
     $stmt->bind_param("i", $delete_id);
     $stmt->execute();
 
+    var_dump($stmt);
+
     $_SESSION['error_message'] = "This plan is used by members and can't be deleted.";
 
     header('location: plans.php');
