@@ -43,7 +43,11 @@
                 header('location: trainers.php');
                 exit();
             } catch(mysqli_sql_exception $e) {
-                $errors[] = 'Email already exists.';
+                if ($e->getCode() === 1062) {
+                    $errors[] = 'A trainer with this email already exists.';
+                } else {
+                    $errors[] = 'Something went wrong. Please try again.';
+                }
             }
         }
     }
@@ -97,19 +101,23 @@
                         <form method="POST" action="">
                             <div class="mb-3">
                                 <label for="first_name" class="form-label">First name</label>
-                                <input type="text" class="form-control" id="first_name" name="first_name" required>
+                                <input type="text" class="form-control" id="first_name" name="first_name"
+                                value="<?php echo htmlspecialchars($first_name ?? ''); ?>" required>
                             </div>
                             <div class="mb-3">
                                 <label for="last_name" class="form-label">Last name</label>
-                                <input type="text" class="form-control" id="last_name" name="last_name" required>
+                                <input type="text" class="form-control" id="last_name" name="last_name" 
+                                value="<?php echo htmlspecialchars($last_name ?? ''); ?>" required>
                             </div>
                             <div class="mb-3">
                                 <label for="email" class="form-label">Email</label>
-                                <input type="email" class="form-control" id="email" name="email" required>
+                                <input type="email" class="form-control" id="email" name="email"
+                                value="<?php echo htmlspecialchars($email ?? ''); ?>" required>
                             </div>
                             <div class="mb-3">
                                 <label for="phone_number" class="form-label">Phone number</label>
-                                <input type="tel" class="form-control" id="phone_number" name="phone_number">
+                                <input type="tel" class="form-control" id="phone_number" name="phone_number"
+                                value="<?php echo htmlspecialchars($phone_number ?? ''); ?>">
                             </div>
                             <button type="submit" class="btn btn-primary w-100">Add trainer</button>
                         </form>
