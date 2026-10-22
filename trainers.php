@@ -6,6 +6,12 @@
 
     $errors = [];
 
+    if(isset($_SESSION['error_message'])) {
+        $errors[] = $_SESSION['error_message'];
+    }
+
+    unset($_SESSION['error_message']);
+
     if($_SERVER['REQUEST_METHOD'] == "POST") {
         $first_name = trim($_POST['first_name']);
         $last_name = trim($_POST['last_name']);
@@ -71,10 +77,7 @@
     <div class="container">
         <h1 class="h3 mb-4">Trainers</h1>
 
-        <!-- Flash poruke -->
-        <!-- <div class="alert alert-success">Trainer added.</div> -->
-        <!-- <div class="alert alert-danger">Email already exists.</div> -->
-         <?php if(isset($_SESSION['success_message'])): ?>
+        <?php if(isset($_SESSION['success_message'])): ?>
             <div class="alert alert-success">
                 <?php 
                     echo htmlspecialchars($_SESSION['success_message']);
@@ -161,7 +164,7 @@
                                                 </td>
                                                 <td><?php echo htmlspecialchars(date("Y/m/d", strtotime($trainer['created_at']))); ?></td>
                                                 <td class="text-end">
-                                                    <form method="POST" action="delete_trainer.php" class="d-inline">
+                                                    <form method="POST" action="delete_trainer.php" class="d-inline"  onsubmit="return confirm('Delete this trainer?');">
                                                         <input type="hidden" name="delete_id" value="<?php echo htmlspecialchars($trainer['trainer_id']); ?>">
                                                         <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
                                                     </form>
