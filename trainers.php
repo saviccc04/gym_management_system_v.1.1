@@ -4,6 +4,50 @@
 
     redirect_if(!isset($_SESSION['admin_id']), 'index.php');
 
+    $errors = [];
+
+    if($_SERVER['REQUEST_METHOD'] == "POST") {
+        $first_name = trim($_POST['first_name']);
+        $last_name = trim($_POST['last_name']);
+        $email = trim($_POST['email']);
+        $phone_number = trim($_POST['phone_number']);
+
+        if($first_name === '') {
+            $errors[] = 'First name is required.';
+        }
+
+        if($last_name === '') {
+            $errors[] = 'Last name is required.';
+        }
+
+        if($email === '') {
+            $errors[] = 'Email is required.';
+        } else if(!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $errors[] = 'Invalid email'; 
+        }
+
+        if($phone_number === '') {
+            $phone_number = NULL;
+        }
+
+        if(empty($errors)) {
+            try {
+                $sql = "INSERT INTO trainers (first_name, last_name, email, phone_number)
+                VALUES (?, ?, ?, ?)";
+                $stmt = $conn->prepare($sql);
+                $stmt->bind_param('ssss', $first_name, $last_name, $email, $phone_number);
+                $stmt->execute();
+    
+                $_SESSION['success_message'] = 'Trainer added.';
+
+                header('location: trainers.php');
+                exit();
+            } catch(mysqli_sql_exception $e) {
+                $errors[] = 'Email already exists.';
+            }
+        }
+    }
+
     $sql = "SELECT * FROM trainers ORDER BY last_name, first_name";
     $result = $conn->query($sql);
 
@@ -26,6 +70,24 @@
         <!-- Flash poruke -->
         <!-- <div class="alert alert-success">Trainer added.</div> -->
         <!-- <div class="alert alert-danger">Email already exists.</div> -->
+         <?php if(isset($_SESSION['success_message'])): ?>
+            <div class="alert alert-success">
+                <?php 
+                    echo htmlspecialchars($_SESSION['success_message']);
+                    unset($_SESSION['success_message']);
+                ?>
+            </div>
+        <?php endif; ?>
+
+        <?php if(!empty($errors)): ?>
+            <div class="alert alert-danger">
+                <ul class="mb-0">
+                    <?php foreach ($errors as $error): ?>
+                        <li><?= htmlspecialchars($error) ?></li>
+                    <?php endforeach; ?>
+                </ul>
+            </div>
+        <?php endif; ?>
 
         <div class="row g-4">
             <div class="col-lg-4">
