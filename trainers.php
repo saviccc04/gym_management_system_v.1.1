@@ -3,6 +3,11 @@
     require_once 'auth.php';
 
     redirect_if(!isset($_SESSION['admin_id']), 'index.php');
+
+    $sql = "SELECT * FROM trainers ORDER BY last_name, first_name";
+    $result = $conn->query($sql);
+
+    $trainers = $result->fetch_all(MYSQLI_ASSOC);
 ?>
 <!DOCTYPE html>
 <html lang="bs">
@@ -67,20 +72,33 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <!-- Ovaj red ponavljaš u petlji za svakog trenera -->
-                                    <tr>
-                                        <td>Marko</td>
-                                        <td>Marković</td>
-                                        <td>marko.trener@email.com</td>
-                                        <td>+38765111222</td>
-                                        <td>21.10.2026.</td>
-                                        <td class="text-end">
-                                            <form method="POST" action="" class="d-inline">
-                                                <input type="hidden" name="delete_id" value="1">
-                                                <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
-                                            </form>
-                                        </td>
-                                    </tr>
+                                    <?php if(empty($trainers)): ?>
+                                        <tr>
+                                            <td colspan="6" class="text-center text-muted">No trainers yet</td>
+                                        </tr>
+                                    <?php else: ?>
+                                        <?php foreach($trainers as $trainer): ?>
+                                            <tr>
+                                                <td><?php echo htmlspecialchars($trainer['first_name']); ?></td>
+                                                <td><?php echo htmlspecialchars($trainer['last_name']); ?></td>
+                                                <td><?php echo htmlspecialchars($trainer['email']); ?></td>
+                                                <td>
+                                                    <?php if(empty($trainer['phone_number'])): ?>
+                                                        <span class="text-muted">—</span>
+                                                    <?php else: ?>
+                                                        <?php echo htmlspecialchars($trainer['phone_number']); ?>
+                                                    <?php endif; ?>
+                                                </td>
+                                                <td><?php echo htmlspecialchars(date("Y/m/d", strtotime($trainer['created_at']))); ?></td>
+                                                <td class="text-end">
+                                                    <form method="POST" action="delete_trainer.php" class="d-inline">
+                                                        <input type="hidden" name="delete_id" value="<?php echo htmlspecialchars($trainer['trainer_id']); ?>">
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                                    </form>
+                                                </td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    <?php endif; ?>
                                 </tbody>
                             </table>
                         </div>
