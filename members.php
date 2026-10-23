@@ -3,6 +3,21 @@
     require_once 'auth.php';
 
     redirect_if(!isset($_SESSION['admin_id']), 'index.php');
+
+    // if($_SERVER['REQUEST_METHOD'] == "POST") {
+
+    // }
+
+    $sql = "SELECT m.*,  tp.name as plan_name, CONCAT(t.first_name,' ',  t.last_name) as trainer_name
+    FROM members as m
+    LEFT JOIN training_plans as tp
+    ON m.plan_id = tp.plan_id
+    LEFT JOIN trainers as t 
+    on m.trainer_id = t.trainer_id
+    ORDER BY m.first_name, m.last_name";
+    $stmt = $conn->query($sql);
+
+    $members = $stmt->fetch_all(MYSQLI_ASSOC);
 ?>
 <!DOCTYPE html>
 <html lang="bs">
@@ -86,20 +101,26 @@
                                 </thead>
                                 <tbody>
                                     <!-- Ovaj red ponavljaš u petlji (LEFT JOIN na planove i trenere) -->
-                                    <tr>
-                                        <td>Nikola Savić</td>
-                                        <td>nikola@email.com</td>
-                                        <td>065403283</td>
-                                        <td>12 sessions plan</td>
-                                        <td><span class="text-muted">No trainer</span></td>
-                                        <td>21.10.2026.</td>
-                                        <td class="text-end">
-                                            <form method="POST" action="" class="d-inline">
-                                                <input type="hidden" name="delete_id" value="1">
-                                                <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
-                                            </form>
-                                        </td>
-                                    </tr>
+                                     <?php foreach($members as $member): ?>
+                                        <tr>
+                                            <td><?php echo htmlspecialchars($member['first_name']); ?></td>
+                                            <td><?php echo htmlspecialchars($member['last_name']); ?></td>
+                                            <td><?php echo htmlspecialchars($member['phone_number']); ?></td>
+                                            <td><?php echo htmlspecialchars($member['plan_name']); ?></td>
+                                            <?php if(!$member['trainer_name']): ?>
+                                                <td><span class="text-muted">No trainer</span></td>
+                                            <?php else: ?>
+                                                <td><?php echo htmlspecialchars($member['trainer_name']); ?></td>
+                                            <?php endif; ?>
+                                            <td><?php echo htmlspecialchars(date("Y/m/d", strtotime($member['created_at']))); ?></td>
+                                            <td class="text-end">
+                                                <form method="POST" action="" class="d-inline">
+                                                    <input type="hidden" name="delete_id" value="<?php echo htmlspecialchars($member['member_id']); ?>">
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
                                 </tbody>
                             </table>
                         </div>
