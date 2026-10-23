@@ -100,27 +100,36 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <!-- Ovaj red ponavljaš u petlji (LEFT JOIN na planove i trenere) -->
-                                     <?php foreach($members as $member): ?>
+                                    <?php if(!empty($members)): ?>
+                                        <?php foreach($members as $member): ?>
+                                            <tr>
+                                                <td><?php echo htmlspecialchars($member['first_name'] . " " . $member['last_name']); ?></td>
+                                                <td><?php echo htmlspecialchars($member['email']); ?></td>
+                                                <?php if(!$member['phone_number']): ?>
+                                                    <td><span class="text-muted">-</span></td>
+                                                <?php else: ?>
+                                                    <td><?php echo htmlspecialchars($member['phone_number']); ?></td>
+                                                <?php endif; ?>
+                                                <td><?php echo htmlspecialchars($member['plan_name']); ?></td>
+                                                <?php if(!$member['trainer_name']): ?>
+                                                    <td><span class="text-muted">-</span></td>
+                                                <?php else: ?>
+                                                    <td><?php echo htmlspecialchars($member['trainer_name']); ?></td>
+                                                <?php endif; ?>
+                                                <td><?php echo htmlspecialchars(date("Y/m/d", strtotime($member['created_at']))); ?></td>
+                                                <td class="text-end">
+                                                    <form method="POST" action="delete_member.php" class="d-inline" onsubmit="return confirm('Delete this member?');">
+                                                        <input type="hidden" name="delete_id" value="<?php echo htmlspecialchars($member['member_id']); ?>">
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                                    </form>
+                                                </td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    <?php else: ?>
                                         <tr>
-                                            <td><?php echo htmlspecialchars($member['first_name']); ?></td>
-                                            <td><?php echo htmlspecialchars($member['last_name']); ?></td>
-                                            <td><?php echo htmlspecialchars($member['phone_number']); ?></td>
-                                            <td><?php echo htmlspecialchars($member['plan_name']); ?></td>
-                                            <?php if(!$member['trainer_name']): ?>
-                                                <td><span class="text-muted">No trainer</span></td>
-                                            <?php else: ?>
-                                                <td><?php echo htmlspecialchars($member['trainer_name']); ?></td>
-                                            <?php endif; ?>
-                                            <td><?php echo htmlspecialchars(date("Y/m/d", strtotime($member['created_at']))); ?></td>
-                                            <td class="text-end">
-                                                <form method="POST" action="" class="d-inline">
-                                                    <input type="hidden" name="delete_id" value="<?php echo htmlspecialchars($member['member_id']); ?>">
-                                                    <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
-                                                </form>
-                                            </td>
+                                            <td colspan="7" class="text-center text-muted">No members yet</td>
                                         </tr>
-                                    <?php endforeach; ?>
+                                    <?php endif; ?>
                                 </tbody>
                             </table>
                         </div>
