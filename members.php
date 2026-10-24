@@ -11,10 +11,17 @@
     $trainers = $result->fetch_all(MYSQLI_ASSOC);
 
     $plans_sql = "SELECT * FROM training_plans
-    ORDER BY trianing_plans.name";
+    ORDER BY training_plans.name";
     $result = $conn->query($plans_sql);
     $plans = $result->fetch_all(MYSQLI_ASSOC);
     
+    $errors = [];
+
+    if(isset($_SESSION['error_message'])) {
+        $errors[] = $_SESSION['error_message'];
+    }
+
+    unset($_SESSION['error_message']);
 
     // if($_SERVER['REQUEST_METHOD'] == "POST") {
 
@@ -45,9 +52,24 @@
     <div class="container">
         <h1 class="h3 mb-4">Members</h1>
 
-        <!-- Flash poruke -->
-        <!-- <div class="alert alert-success">Member added.</div> -->
-        <!-- <div class="alert alert-danger">Email already exists.</div> -->
+        <?php if(isset($_SESSION['success_message'])): ?>
+            <div class="alert alert-success">
+                <?php 
+                    echo htmlspecialchars($_SESSION['success_message']);
+                    unset($_SESSION['success_message']);
+                ?>
+            </div>
+        <?php endif; ?>
+
+        <?php if(!empty($errors)): ?>
+            <div class="alert alert-danger">
+                <ul class="mb-0">
+                    <?php foreach ($errors as $error): ?>
+                        <li><?= htmlspecialchars($error) ?></li>
+                    <?php endforeach; ?>
+                </ul>
+            </div>
+        <?php endif; ?>
 
         <div class="row g-4">
             <div class="col-lg-4">
