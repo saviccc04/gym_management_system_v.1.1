@@ -4,20 +4,32 @@
 
     redirect_if(!isset($_SESSION['admin_id']), 'index.php');
 
+    $trainers_sql = "SELECT CONCAT(t.first_name,' ',  t.last_name) as trainer_name, t.trainer_id
+    FROM trainers as t
+    ORDER BY t.last_name, t.first_name";
+    $result = $conn->query($trainers_sql);
+    $trainers = $result->fetch_all(MYSQLI_ASSOC);
+
+    $plans_sql = "SELECT * FROM training_plans
+    ORDER BY trianing_plans.name";
+    $result = $conn->query($plans_sql);
+    $plans = $result->fetch_all(MYSQLI_ASSOC);
+    
+
     // if($_SERVER['REQUEST_METHOD'] == "POST") {
 
     // }
 
-    $sql = "SELECT m.*,  tp.name as plan_name, CONCAT(t.first_name,' ',  t.last_name) as trainer_name
+    $sql = "SELECT m.*,  tp.name as plan_name,  CONCAT(t.first_name,' ',  t.last_name) as trainer_name
     FROM members as m
     LEFT JOIN training_plans as tp
     ON m.plan_id = tp.plan_id
     LEFT JOIN trainers as t 
     on m.trainer_id = t.trainer_id
-    ORDER BY m.first_name, m.last_name";
-    $stmt = $conn->query($sql);
+    ORDER BY m.last_name, m.first_name";
+    $result = $conn->query($sql);
 
-    $members = $stmt->fetch_all(MYSQLI_ASSOC);
+    $members = $result->fetch_all(MYSQLI_ASSOC);
 ?>
 <!DOCTYPE html>
 <html lang="bs">
@@ -62,18 +74,19 @@
                             <div class="mb-3">
                                 <label for="plan_id" class="form-label">Training plan</label>
                                 <select class="form-select" id="plan_id" name="plan_id" required>
-                                    <option value="">Select plan</option>
-                                    <!-- Opcije puniš iz tabele training_plans -->
-                                    <option value="1">12 sessions plan</option>
+                                    <option value="" disabled selected hidden>Select plan</option>
+                                    <?php foreach($plans as $plan): ?>
+                                        <option value="<?php echo htmlspecialchars($plan['plan_id']); ?>"><?php echo htmlspecialchars($plan['name']); ?></option>
+                                    <?php endforeach; ?>
                                 </select>
                             </div>
                             <div class="mb-3">
                                 <label for="trainer_id" class="form-label">Trainer</label>
                                 <select class="form-select" id="trainer_id" name="trainer_id">
-                                    <!-- Prazna vrijednost = bez trenera (NULL u bazi) -->
                                     <option value="">No trainer</option>
-                                    <!-- Opcije puniš iz tabele trainers -->
-                                    <option value="1">Marko Marković</option>
+                                    <?php foreach($trainers as $trainer): ?>
+                                        <option value="<?php echo htmlspecialchars($trainer['trainer_id']); ?>"><?php echo htmlspecialchars($trainer['trainer_name']); ?></option>
+                                    <?php endforeach; ?>
                                 </select>
                             </div>
                             <button type="submit" class="btn btn-primary w-100">Add member</button>
