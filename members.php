@@ -226,6 +226,10 @@
                                                         <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
                                                     </form>
                                                 </td>
+                                                <td>
+                                                    <a href="edit_member.php?id=<?= htmlspecialchars($member['member_id']) ?>"
+                                                    class="btn btn-sm btn-outline-primary me-1">Edit</a>
+                                                </td>
                                             </tr>
                                         <?php endforeach; ?>
                                     <?php else: ?>
