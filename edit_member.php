@@ -3,6 +3,49 @@
     require_once 'auth.php';
 
     redirect_if(!isset($_SESSION['admin_id']), 'index.php');
+
+    $errors = [];
+
+    $member_id = $_GET['id'] ?? '';
+
+    $trainers_sql = "SELECT CONCAT(t.first_name,' ',  t.last_name) as trainer_name, t.trainer_id
+    FROM trainers as t
+    ORDER BY t.last_name, t.first_name";
+    $result = $conn->query($trainers_sql);
+    $trainers = $result->fetch_all(MYSQLI_ASSOC);
+
+    var_dump($trainers);
+
+    $plans_sql = "SELECT * FROM training_plans
+    ORDER BY training_plans.name";
+    $result = $conn->query($plans_sql);
+    $plans = $result->fetch_all(MYSQLI_ASSOC);
+
+    if($member_id === '') {
+        header('location: members.php');
+        exit();
+    } else {
+        $member_id = filter_var($member_id, FILTER_VALIDATE_INT);
+
+        if(!$member_id) {
+            header('location: members.php');
+            exit();
+        }
+    }
+
+    $sql = "SELECT * FROM members WHERE member_id = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param('i', $member_id);
+    $stmt->execute();
+    
+    $result = $stmt->get_result();
+    $member = $result->fetch_assoc();
+
+    if($result->num_rows === 0) {
+        $_SESSION['error_message'] = 'Member not found.';
+        header('location: members.php');
+        exit();
+    }
 ?>
 <!DOCTYPE html>
 <html lang="bs">
@@ -33,36 +76,41 @@
                             <div class="mb-3">
                                 <label for="first_name" class="form-label">First name</label>
                                 <input type="text" class="form-control" id="first_name" name="first_name" required
-                                       value="">
+                                       value="<?php echo htmlspecialchars($member['first_name']); ?>">
                             </div>
                             <div class="mb-3">
                                 <label for="last_name" class="form-label">Last name</label>
                                 <input type="text" class="form-control" id="last_name" name="last_name" required
-                                       value="">
+                                       value="<?php echo htmlspecialchars($member['last_name']); ?>">
                             </div>
                             <div class="mb-3">
                                 <label for="email" class="form-label">Email</label>
                                 <input type="email" class="form-control" id="email" name="email" required
-                                       value="">
+                                       value="<?php echo htmlspecialchars($member['email']); ?>">
                             </div>
                             <div class="mb-3">
                                 <label for="phone_number" class="form-label">Phone number</label>
                                 <input type="tel" class="form-control" id="phone_number" name="phone_number"
-                                       value="">
+                                       value="<?php echo htmlspecialchars($member['phone_number']); ?>">
                             </div>
                             <div class="mb-3">
                                 <label for="plan_id" class="form-label">Training plan</label>
                                 <select class="form-select" id="plan_id" name="plan_id" required>
-                                    <!-- Opcije iz $plans, sa selected za trenutni plan člana -->
-                                    <option value="1">12 sessions plan</option>
+                                    <?php foreach($plans as $plan): ?>
+                                        <option value="<?php echo htmlspecialchars($plan['plan_id']); ?>"
+                                        <?php if ((int)$member['plan_id'] === (int)$plan['plan_id']) echo 'selected'; ?>>
+                                        <?php echo htmlspecialchars($plan['name']); ?></option>
+                                    <?php endforeach; ?>
                                 </select>
                             </div>
                             <div class="mb-3">
                                 <label for="trainer_id" class="form-label">Trainer</label>
                                 <select class="form-select" id="trainer_id" name="trainer_id">
-                                    <option value="">No trainer</option>
-                                    <!-- Opcije iz $trainers, sa selected za trenutnog trenera -->
-                                    <option value="1">Marko Marković</option>
+                                    <?php foreach($trainers as $trainer): ?>
+                                        <option value="<?php echo htmlspecialchars($trainer['trainer_id']); ?>"
+                                        <?php if (isset($member['trainer_id']) && (int)$member['trainer_id'] === (int)$trainer['trainer_id']) echo 'selected'; ?>>
+                                        <?php echo htmlspecialchars($trainer['trainer_name']); ?></option>
+                                    <?php endforeach; ?>
                                 </select>
                             </div>
 
