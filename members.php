@@ -28,7 +28,7 @@
         $last_name = trim($_POST['last_name'] ?? '');
         $email = trim($_POST['email'] ?? '');
         $phone_number = trim($_POST['phone_number'] ?? '');
-        $trainer_id = (int)$_POST['trainer_id'];
+        $trainer_id = (int)($_POST['trainer_id'] ?? '');
         $plan_id = trim( $_POST['plan_id'] ?? '');
 
         if($first_name === '') {
@@ -138,26 +138,32 @@
                         <form method="POST" action="">
                             <div class="mb-3">
                                 <label for="first_name" class="form-label">First name</label>
-                                <input type="text" class="form-control" id="first_name" name="first_name" required>
+                                <input type="text" class="form-control" id="first_name" name="first_name" required
+                                value="<?php echo htmlspecialchars($first_name ?? ''); ?>">
                             </div>
                             <div class="mb-3">
                                 <label for="last_name" class="form-label">Last name</label>
-                                <input type="text" class="form-control" id="last_name" name="last_name" required>
+                                <input type="text" class="form-control" id="last_name" name="last_name" required
+                                value="<?php echo htmlspecialchars($last_name ?? ''); ?>">
                             </div>
                             <div class="mb-3">
                                 <label for="email" class="form-label">Email</label>
-                                <input type="email" class="form-control" id="email" name="email" required>
+                                <input type="email" class="form-control" id="email" name="email" required
+                                value="<?php echo htmlspecialchars($email ?? ''); ?>">
                             </div>
                             <div class="mb-3">
                                 <label for="phone_number" class="form-label">Phone number</label>
-                                <input type="tel" class="form-control" id="phone_number" name="phone_number">
+                                <input type="tel" class="form-control" id="phone_number" name="phone_number"
+                                value="<?php echo htmlspecialchars($phone_number ?? ''); ?>">
                             </div>
                             <div class="mb-3">
                                 <label for="plan_id" class="form-label">Training plan</label>
                                 <select class="form-select" id="plan_id" name="plan_id" required>
-                                    <option value="" disabled selected hidden>Select plan</option>
+                                    <option value="" disabled <?php if(!isset($plan_id) || !is_int($plan_id)) echo 'selected' ?> hidden>Select plan</option>
                                     <?php foreach($plans as $plan): ?>
-                                        <option value="<?php echo htmlspecialchars($plan['plan_id']); ?>"><?php echo htmlspecialchars($plan['name']); ?></option>
+                                        <option value="<?php echo htmlspecialchars($plan['plan_id']); ?>" <?php if (isset($plan_id) && (int)$plan['plan_id'] === $plan_id) echo 'selected'; ?>>
+                                            <?php echo htmlspecialchars($plan['name']); ?>
+                                        </option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
@@ -166,7 +172,10 @@
                                 <select class="form-select" id="trainer_id" name="trainer_id">
                                     <option value="">No trainer</option>
                                     <?php foreach($trainers as $trainer): ?>
-                                        <option value="<?php echo htmlspecialchars($trainer['trainer_id']); ?>"><?php echo htmlspecialchars($trainer['trainer_name']); ?></option>
+                                        <option value="<?php echo htmlspecialchars($trainer['trainer_id']); ?>"
+                                             <?php if (isset($trainer_id) && (int)$trainer['trainer_id'] === $trainer_id) echo 'selected'; ?>>
+                                            <?php echo htmlspecialchars($trainer['trainer_name']); ?>
+                                        </option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
