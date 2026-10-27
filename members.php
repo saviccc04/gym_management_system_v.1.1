@@ -30,6 +30,7 @@
         $phone_number = trim($_POST['phone_number'] ?? '');
         $trainer_id = (int)($_POST['trainer_id'] ?? '');
         $plan_id = trim( $_POST['plan_id'] ?? '');
+        $photo = $_FILES['photo'] ?? NULL;
 
         if($first_name === '') {
             $errors[] = 'First name is required.';
@@ -60,6 +61,10 @@
             if ($plan_id === false) {
                 $errors[] = 'Invalid training plan.';
             }
+        }
+
+        if($photo === NULL || $photo['error'] === UPLOAD_ERR_NO_FILE) {
+            $photo = NULL;
         }
 
         if(empty($errors)) {
@@ -135,7 +140,7 @@
                 <div class="card shadow-sm">
                     <div class="card-body">
                         <h2 class="h5 mb-3">Add member</h2>
-                        <form method="POST" action="">
+                        <form method="POST" enctype="multipart/form-data" action="">
                             <div class="mb-3">
                                 <label for="first_name" class="form-label">First name</label>
                                 <input type="text" class="form-control" id="first_name" name="first_name" required
@@ -179,6 +184,11 @@
                                     <?php endforeach; ?>
                                 </select>
                             </div>
+                            <div class="mb-3">
+                                <label for="photo" class="form-label">Photo <span class="text-muted">(optional)</span></label>
+                                <input type="file" class="form-control" id="photo" name="photo" accept="image/jpeg,image/png,image/webp">
+                                <div class="form-text">JPG, PNG or WEBP, max 2 MB.</div>
+                            </div>
                             <button type="submit" class="btn btn-primary w-100">Add member</button>
                         </form>
                     </div>
@@ -199,6 +209,7 @@
                                         <th>Plan</th>
                                         <th>Trainer</th>
                                         <th>Created at</th>
+                                        <th>Photo</th>
                                         <th class="text-end">Action</th>
                                     </tr>
                                 </thead>
@@ -220,21 +231,21 @@
                                                     <td><?php echo htmlspecialchars($member['trainer_name']); ?></td>
                                                 <?php endif; ?>
                                                 <td><?php echo htmlspecialchars(date("Y/m/d", strtotime($member['created_at']))); ?></td>
+                                                <td><p>bla</p></td>
                                                 <td class="text-end">
+                                                    <a href="edit_member.php?id=<?= htmlspecialchars($member['member_id']) ?>"
+                                                    class="btn btn-sm btn-outline-primary me-1">Edit</a>
+
                                                     <form method="POST" action="delete_member.php" class="d-inline" onsubmit="return confirm('Delete this member?');">
                                                         <input type="hidden" name="delete_id" value="<?php echo htmlspecialchars($member['member_id']); ?>">
                                                         <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
                                                     </form>
                                                 </td>
-                                                <td>
-                                                    <a href="edit_member.php?id=<?= htmlspecialchars($member['member_id']) ?>"
-                                                    class="btn btn-sm btn-outline-primary me-1">Edit</a>
-                                                </td>
                                             </tr>
                                         <?php endforeach; ?>
                                     <?php else: ?>
                                         <tr>
-                                            <td colspan="7" class="text-center text-muted">No members yet</td>
+                                            <td colspan="8" class="text-center text-muted">No members yet</td>
                                         </tr>
                                     <?php endif; ?>
                                 </tbody>
