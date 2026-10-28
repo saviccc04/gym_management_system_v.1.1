@@ -67,6 +67,25 @@
             $photo = NULL;
         }
 
+        if($photo['error'] !== UPLOAD_ERR_OK) {
+            $errors[] = 'Photo upload failed.';
+        } else if($photo['size'] > 2 * 1024 * 1024) {
+            $errors[] = 'Photo must be 2 MB or smaller.';
+        }
+
+        if(isset($photo) && $photo['error'] === UPLOAD_ERR_OK) {
+            $finfo = new finfo(FILEINFO_MIME_TYPE);
+            $actual_mime_type = $finfo->file($photo['tmp_name']); 
+            $allowed_types = ['image/jpeg', 'image/png', 'image/webp'];
+
+
+            if(!in_array($actual_mime_type, $allowed_types, true)) {
+                $errors[] = 'Photo must be JPG, PNG or WEBP.';
+            }
+
+        }
+
+
         if(empty($errors)) {
             try {
                 $sql = "INSERT INTO members (first_name, last_name, email, phone_number, plan_id, trainer_id)
