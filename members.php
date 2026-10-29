@@ -67,46 +67,70 @@
             $photo = NULL;
         }
 
-        if($photo['error'] !== UPLOAD_ERR_OK) {
-            $errors[] = 'Photo upload failed.';
-        } else if($photo['size'] > 2 * 1024 * 1024) {
-            $errors[] = 'Photo must be 2 MB or smaller.';
-        }
+        if($photo !== NULL) {
+            if($photo['error'] !== UPLOAD_ERR_OK) {
+                $errors[] = 'Photo upload failed.';
+            } else if($photo['size'] > 2 * 1024 * 1024) {
+                $errors[] = 'Photo must be 2 MB or smaller.';
+            } else {
+                $finfo = new finfo(FILEINFO_MIME_TYPE);
+                $actual_mime_type = $finfo->file($photo['tmp_name']); 
 
-        if(isset($photo) && $photo['error'] === UPLOAD_ERR_OK) {
-            $finfo = new finfo(FILEINFO_MIME_TYPE);
-            $actual_mime_type = $finfo->file($photo['tmp_name']); 
-            $allowed_types = ['image/jpeg', 'image/png', 'image/webp'];
-
-
-            if(!in_array($actual_mime_type, $allowed_types, true)) {
-                $errors[] = 'Photo must be JPG, PNG or WEBP.';
+                $allowed_types = [
+                    'image/jpeg' => 'jpg',
+                    'image/png' => 'png',
+                    'image/webp' => 'webp'
+                ];
+    
+    
+                if(!isset($allowed_types[$actual_mime_type])) {
+                    $errors[] = 'Photo must be JPG, PNG or WEBP.';
+                }
             }
-
         }
+
 
 
         if(empty($errors)) {
-            try {
-                $sql = "INSERT INTO members (first_name, last_name, email, phone_number, plan_id, trainer_id)
-                VALUES (?, ?, ?, ?, ?, ?)";
-                $stmt = $conn->prepare($sql);
-                $stmt->bind_param('ssssii', $first_name, $last_name, $email, $phone_number, $plan_id, $trainer_id);
-                $stmt->execute();
-    
-                $_SESSION['success_message'] = 'Member added.';
+            $photo_path = NULL;
 
-                header('location: members.php');
-                exit();
-            } catch(mysqli_sql_exception $e) {
-                if ($e->getCode() === 1062) {
-                    $errors[] = 'A member with this email already exists.';
-                } elseif($e->getCode() === 1452) {
-                    $errors[] = "Selected plan or trainer doesn't exist.";
-                } else {
-                    $errors[] = 'Something went wrong. Please try again.';
+            if($photo !== NULL) {
+                $extension = isset($allowed_types[$actual_mime_type]) ? $allowed_types[$actual_mime_type] : '' ;
+                $photo_name = bin2hex(random_bytes(16)) . "." . $extension;
+                $photo_path = 'uploads/' . $photo_name;
+    
+                if(!move_uploaded_file($photo['tmp_name'], $photo_path)) {
+                    $errors[] = 'Something went wrong.'; 
                 }
             }
+
+            if(empty($errors)) {
+                try {
+                    $sql = "INSERT INTO members (first_name, last_name, email, phone_number, plan_id, trainer_id, photo_path)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)";
+                    $stmt = $conn->prepare($sql);
+                    $stmt->bind_param('ssssiis', $first_name, $last_name, $email, $phone_number, $plan_id, $trainer_id, $photo_path);
+                    $stmt->execute();
+        
+                    $_SESSION['success_message'] = 'Member added.';
+    
+                    header('location: members.php');
+                    exit();
+                } catch(mysqli_sql_exception $e) {
+                    if ($e->getCode() === 1062) {
+                        $errors[] = 'A member with this email already exists.';
+                    } elseif($e->getCode() === 1452) {
+                        $errors[] = "Selected plan or trainer doesn't exist.";
+                    } else {
+                        $errors[] = 'Something went wrong. Please try again.';
+                    }
+    
+                    if ($photo_path !== NULL && file_exists($photo_path)) {
+                        unlink($photo_path);
+                    }
+                }
+            }
+
         }
     }
 
@@ -250,7 +274,14 @@
                                                     <td><?php echo htmlspecialchars($member['trainer_name']); ?></td>
                                                 <?php endif; ?>
                                                 <td><?php echo htmlspecialchars(date("Y/m/d", strtotime($member['created_at']))); ?></td>
-                                                <td><p>bla</p></td>
+                                                <td>
+                                                    <?php if(isset($member['photo_path'])): ?>
+                                                        <img src="<?php echo htmlspecialchars($member['photo_path']); ?>"
+                                                        width="40px" height="40px" class="rounded object-fit-cover" alt="<?= htmlspecialchars($member['first_name']) ?>">
+                                                    <?php else: ?>
+                                                        <span class="text-muted">—</span>
+                                                    <?php endif; ?>
+                                                </td>
                                                 <td class="text-end">
                                                     <a href="edit_member.php?id=<?= htmlspecialchars($member['member_id']) ?>"
                                                     class="btn btn-sm btn-outline-primary me-1">Edit</a>
