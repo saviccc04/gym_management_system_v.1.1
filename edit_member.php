@@ -32,6 +32,7 @@
     $phone_number = $member['phone_number'] ?? ''; 
     $trainer_id = $member['trainer_id'] ?? ''; 
     $plan_id = $member['plan_id'] ?? ''; 
+    $photo_path = $member['photo_path'] ?? NULL; 
 
     $trainers_sql = "SELECT CONCAT(t.first_name,' ',  t.last_name) as trainer_name, t.trainer_id
     FROM trainers as t
@@ -51,6 +52,8 @@
         $phone_number = trim($_POST['phone_number'] ?? '');
         $trainer_id = (int)($_POST['trainer_id'] ?? '');
         $plan_id = trim( $_POST['plan_id'] ?? '');
+        $photo = $_FILES['photo'] ?? NULL;
+        $photo_path = trim( $_POST['photo'] ?? NULL);
 
         if($first_name === '') {
             $errors[] = 'First name is required.';
@@ -83,16 +86,54 @@
             }
         }
 
+        if($photo === NULL || $photo['error'] === UPLOAD_ERR_NO_FILE) {
+            $photo = NULL;
+        }
+
+        if($photo !== NULL) {
+            if($photo['error'] !== UPLOAD_ERR_OK) {
+                $errors[] = 'Photo upload failed.';
+            } else if($photo['size'] > 2 * 1024 * 1024) {
+                $errors[] = 'Photo must be 2 MB or smaller.';
+            } else {
+                $finfo = new finfo(FILEINFO_MIME_TYPE);
+                $actual_mime_type = $finfo->file($photo['tmp_name']); 
+
+                $allowed_types = [
+                    'image/jpeg' => 'jpg',
+                    'image/png' => 'png',
+                    'image/webp' => 'webp'
+                ];
+    
+    
+                if(!isset($allowed_types[$actual_mime_type])) {
+                    $errors[] = 'Photo must be JPG, PNG or WEBP.';
+                }
+            }
+        }
+
         if(empty($errors)) {
             try {
                 $sql = "UPDATE members
-                SET first_name = ?, last_name = ?, email = ?, phone_number = ?, plan_id = ?, trainer_id = ?
+                SET first_name = ?, last_name = ?, email = ?, phone_number = ?, plan_id = ?, trainer_id = ?, photo_path = ?
                 WHERE member_id = ?";
                 $stmt = $conn->prepare($sql);
-                $stmt->bind_param('ssssiii', $first_name, $last_name, $email, $phone_number, $plan_id, $trainer_id, $member_id);
+                $stmt->bind_param('ssssiiis', $first_name, $last_name, $email, $phone_number, $plan_id, $trainer_id, $member_id, $photo_path);
                 $stmt->execute();
     
                 $_SESSION['success_message'] = 'Member updated.';
+
+                $photo_path = NULL;
+
+                if($photo !== NULL) {
+                    $extension = isset($allowed_types[$actual_mime_type]) ? $allowed_types[$actual_mime_type] : '' ;
+                    $photo_name = bin2hex(random_bytes(16)) . "." . $extension;
+                    $photo_path = 'uploads/' . $photo_name;
+        
+                    if(!move_uploaded_file($photo['tmp_name'], $photo_path)) {
+                        $errors[] = 'Something went wrong.'; 
+                    }
+                }
 
                 header('location: members.php');
                 exit();
@@ -181,6 +222,25 @@
                                         <?php echo htmlspecialchars($trainer['trainer_name']); ?></option>
                                     <?php endforeach; ?>
                                 </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="photo" class="form-label">Photo <span class="text-muted">(optional)</span></label>
+
+                                <?php if (!empty($photo_path)): ?>
+                                    <div class="d-flex align-items-center gap-3 mb-2">
+                                        <img src="<?= htmlspecialchars($photo_path) ?>"
+                                            width="64" height="64" class="rounded object-fit-cover"
+                                            alt="<?= htmlspecialchars($first_name) ?>">
+                                        <span class="text-muted small">Current photo</span>
+                                    </div>
+                                <?php endif; ?>
+
+                                <input type="file" class="form-control" id="photo" name="photo" enctype="multipart/form-data" accept="image/jpeg,image/png,image/webp">
+                                <div class="form-text">
+                                    JPG, PNG or WEBP, max 2 MB.
+                                    <?php if (!empty($photo_path)): ?>Leave empty to keep the current photo.<?php endif; ?>
+                                </div>
                             </div>
 
                             <div class="d-flex gap-2">
