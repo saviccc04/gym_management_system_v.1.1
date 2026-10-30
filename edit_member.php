@@ -32,7 +32,7 @@
     $phone_number = $member['phone_number'] ?? ''; 
     $trainer_id = $member['trainer_id'] ?? ''; 
     $plan_id = $member['plan_id'] ?? ''; 
-    $photo_path = $member['photo_path'] ?? NULL; 
+    $old_photo_path = $member['photo_path'] ?? NULL; 
 
     $trainers_sql = "SELECT CONCAT(t.first_name,' ',  t.last_name) as trainer_name, t.trainer_id
     FROM trainers as t
@@ -53,7 +53,6 @@
         $trainer_id = (int)($_POST['trainer_id'] ?? '');
         $plan_id = trim( $_POST['plan_id'] ?? '');
         $photo = $_FILES['photo'] ?? NULL;
-        $photo_path = trim( $_POST['photo'] ?? NULL);
 
         if($first_name === '') {
             $errors[] = 'First name is required.';
@@ -105,7 +104,6 @@
                     'image/webp' => 'webp'
                 ];
     
-    
                 if(!isset($allowed_types[$actual_mime_type])) {
                     $errors[] = 'Photo must be JPG, PNG or WEBP.';
                 }
@@ -113,40 +111,51 @@
         }
 
         if(empty($errors)) {
-            try {
-                $sql = "UPDATE members
-                SET first_name = ?, last_name = ?, email = ?, phone_number = ?, plan_id = ?, trainer_id = ?, photo_path = ?
-                WHERE member_id = ?";
-                $stmt = $conn->prepare($sql);
-                $stmt->bind_param('ssssiiis', $first_name, $last_name, $email, $phone_number, $plan_id, $trainer_id, $member_id, $photo_path);
-                $stmt->execute();
-    
-                $_SESSION['success_message'] = 'Member updated.';
-
-                $photo_path = NULL;
-
-                if($photo !== NULL) {
-                    $extension = isset($allowed_types[$actual_mime_type]) ? $allowed_types[$actual_mime_type] : '' ;
-                    $photo_name = bin2hex(random_bytes(16)) . "." . $extension;
-                    $photo_path = 'uploads/' . $photo_name;
+            $new_photo_path = NULL;
+            
+            if($photo !== NULL) {
+                
+                $extension = isset($allowed_types[$actual_mime_type]) ? $allowed_types[$actual_mime_type] : '' ;
+                $photo_name = bin2hex(random_bytes(16)) . "." . $extension;
+                $new_photo_path = 'uploads/' . $photo_name;    
         
-                    if(!move_uploaded_file($photo['tmp_name'], $photo_path)) {
-                        $errors[] = 'Something went wrong.'; 
+                if(!move_uploaded_file($photo['tmp_name'], $new_photo_path)) {
+                    $errors[] = 'Something went wrong.'; 
+                }
+            }     
+
+            if(empty($errors)) {
+                try {
+                    $photo_path = $new_photo_path ?? $old_photo_path;
+                    $sql = "UPDATE members
+                    SET first_name = ?, last_name = ?, email = ?, phone_number = ?, plan_id = ?, trainer_id = ?, photo_path = ?
+                    WHERE member_id = ?";
+                    $stmt = $conn->prepare($sql);
+                    $stmt->bind_param('ssssiisi', $first_name, $last_name, $email, $phone_number, $plan_id, $trainer_id, $photo_path,  $member_id);
+                    $stmt->execute();
+        
+                    $_SESSION['success_message'] = 'Member updated.';
+
+                    if($old_photo_path !== NULL && file_exists($old_photo_path)) {
+                        unlink($old_photo_path);
+                    }
+    
+                    header('location: members.php');
+                    exit();
+                } catch(mysqli_sql_exception $e) {
+                    if ($e->getCode() === 1062) {
+                        $errors[] = 'A member with this email already exists.';
+                    } elseif($e->getCode() === 1452) {
+                        $errors[] = "Selected plan or trainer doesn't exist.";
+                    } else {
+                        $errors[] = 'Something went wrong. Please try again.';
+                    }
+
+                    if ($new_photo_path !== NULL && file_exists($new_photo_path)) {
+                        unlink($new_photo_path);
                     }
                 }
-
-                header('location: members.php');
-                exit();
-            } catch(mysqli_sql_exception $e) {
-                if ($e->getCode() === 1062) {
-                    $errors[] = 'A member with this email already exists.';
-                } elseif($e->getCode() === 1452) {
-                    $errors[] = "Selected plan or trainer doesn't exist.";
-                } else {
-                    $errors[] = 'Something went wrong. Please try again.';
-                }
             }
-        
         }
     }
 ?>
@@ -181,7 +190,7 @@
             <div class="col-lg-6">
                 <div class="card shadow-sm">
                     <div class="card-body">
-                        <form method="POST" action="">
+                        <form method="POST" action="" enctype="multipart/form-data">
                             <div class="mb-3">
                                 <label for="first_name" class="form-label">First name</label>
                                 <input type="text" class="form-control" id="first_name" name="first_name" required
@@ -227,19 +236,19 @@
                             <div class="mb-3">
                                 <label for="photo" class="form-label">Photo <span class="text-muted">(optional)</span></label>
 
-                                <?php if (!empty($photo_path)): ?>
+                                <?php if (!empty($old_photo_path)): ?>
                                     <div class="d-flex align-items-center gap-3 mb-2">
-                                        <img src="<?= htmlspecialchars($photo_path) ?>"
+                                        <img src="<?= htmlspecialchars($old_photo_path) ?>"
                                             width="64" height="64" class="rounded object-fit-cover"
                                             alt="<?= htmlspecialchars($first_name) ?>">
                                         <span class="text-muted small">Current photo</span>
                                     </div>
                                 <?php endif; ?>
 
-                                <input type="file" class="form-control" id="photo" name="photo" enctype="multipart/form-data" accept="image/jpeg,image/png,image/webp">
+                                <input type="file" class="form-control" id="photo" name="photo" accept="image/jpeg,image/png,image/webp">
                                 <div class="form-text">
                                     JPG, PNG or WEBP, max 2 MB.
-                                    <?php if (!empty($photo_path)): ?>Leave empty to keep the current photo.<?php endif; ?>
+                                    <?php if (!empty($old_photo_path)): ?>Leave empty to keep the current photo.<?php endif; ?>
                                 </div>
                             </div>
 
