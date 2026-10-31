@@ -242,6 +242,7 @@
                 <div class="card shadow-sm">
                     <div class="card-body">
                         <h2 class="h5 mb-3">All members</h2>
+                        <a href="export_members.php" class="btn btn-sm btn-success">Export CSV</a>
                         <div class="table-responsive">
                             <table class="table table-striped align-middle mb-0">
                                 <thead>
