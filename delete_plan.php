@@ -17,7 +17,11 @@ try {
     $_SESSION['success_message'] = "The plan has been deleted.";
     
 } catch(mysqli_sql_exception $e) {
-    $_SESSION['error_message'] = "This plan is used by members and can't be deleted.";
+    if($e->getCode() === 1451) {
+        $_SESSION['error_message'] = "This plan is used by members and can't be deleted.";
+    } else {
+        $_SESSION['error_message'] = "Something went wrong.";
+    }
 }
 
 header('location: plans.php');
