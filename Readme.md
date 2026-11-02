@@ -68,7 +68,7 @@ The full schema is in [`database.sql`](database.sql).
 1. Clone the repository into your web root (e.g. `C:\xampp\htdocs\`):
 
    ```bash
-   git clone https://github.com/saviccc04/gym_management_system.git
+   git clone https://github.com/saviccc04/gym_management_system_v.1.1.git
    ```
 
 2. Install dependencies (run inside the project folder):
@@ -78,7 +78,7 @@ The full schema is in [`database.sql`](database.sql).
    ```
 
 3. Create the database: open phpMyAdmin, go to the **Import** tab and import `database.sql`.
-   This creates the `gym_management_system` database with all tables.
+   This creates the `gym_management_system_v.1.1` database with all tables.
 
 4. Copy `config.example.php` to `config.php` and fill in your database credentials.
 
@@ -96,7 +96,7 @@ The full schema is in [`database.sql`](database.sql).
    INSERT INTO admins (username, password) VALUES ('admin', 'PASTE_HASH_HERE');
    ```
 
-7. Open `http://localhost/gym_management_system/` and log in.
+7. Open `http://localhost/gym_management_system_v.1.1/` and log in.
 
 ## Project structure
 

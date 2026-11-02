@@ -29,6 +29,12 @@ $stmt->execute();
 $result = $stmt->get_result();
 $member = $result->fetch_assoc();
 
+if($result->num_rows === 0) {
+    $_SESSION['error_message'] = 'Member not found.';
+    header('location: members.php');
+    exit();
+}
+
 $html = render_access_card($member);
 
 $dompdf = new Dompdf();
