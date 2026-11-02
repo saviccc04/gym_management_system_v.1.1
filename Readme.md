@@ -4,7 +4,7 @@ A simple admin panel for managing a gym, built with plain PHP and MySQL — no f
 
 ## Screenshots
 
-![Members page](screenshots/members_page.png)
+<!-- ![Members page](screenshots/members_page.png) -->
 
 ## Features
 
