@@ -30,13 +30,13 @@
 
         $data = $validation['data']; 
         $photo_data = $validation_photo['data'];
+        $extension = $validation_photo['extension'];
         $errors = array_merge($errors, $validation['errors'], $validation_photo['errors']); 
         
         if(empty($errors)) {
             $photo_path = NULL;
 
             if($photo_data['photo'] !== NULL) {
-                $extension = isset($validation_photo['allowed_types']) ? $validation_photo['allowed_types'] : '' ;
                 $photo_name = bin2hex(random_bytes(16)) . "." . $extension;
                 $photo_path = 'uploads/' . $photo_name;
     

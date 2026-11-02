@@ -1,14 +1,13 @@
 <?php
-require_once 'config.php';
-require_once 'auth.php';
+function count_table(mysqli $conn, string $table): int {
+    if(in_array($table, ['members', 'trainers', 'training_plans'], true)) {
+        $sql = "SELECT COUNT(*) as number FROM $table";
+        $result = $conn->query($sql);
 
-redirect_if(!isset($_SESSION['admin_id']), 'index.php');
-
-function count_table(mysqli $conn, string $table) {
-    $sql = "SELECT COUNT(*) as number FROM $table";
-    $result = $conn->query($sql);
-
-    return (int)$result->fetch_row()[0];
+        return (int)$result->fetch_row()[0];
+    }
+    
+    return throw new InvalidArgumentException("Table not allowed: $table");
 }
 
 function validate_member(array $input): array {
@@ -59,6 +58,7 @@ function validate_member(array $input): array {
 function validate_photo(array $input): array {
     $errors = [];
     $data = [];
+    $extension = NULL;
 
     $data['photo'] = $input['photo'] ?? NULL;
 
@@ -70,7 +70,7 @@ function validate_photo(array $input): array {
         if($data['photo']['error'] !== UPLOAD_ERR_OK) {
             $errors[] = 'Photo upload failed.';
         } else if($data['photo']['size'] > 2 * 1024 * 1024) {
-                $errors[] = 'Photo must be 2 MB or smaller.';
+            $errors[] = 'Photo must be 2 MB or smaller.';
         } else {
             $finfo = new finfo(FILEINFO_MIME_TYPE);
             $actual_mime_type = $finfo->file($data['photo']['tmp_name']); 
@@ -83,9 +83,11 @@ function validate_photo(array $input): array {
     
             if(!isset($allowed_types[$actual_mime_type])) {
                 $errors[] = 'Photo must be JPG, PNG or WEBP.';
+            } else {
+                $extension = $allowed_types[$actual_mime_type];
             }
         }
     }
 
-    return ['errors' => $errors, 'data' => $data, 'allowed_types' => $allowed_types[$actual_mime_type]];
+    return ['errors' => $errors, 'data' => $data, 'extension' => $extension];
 }
