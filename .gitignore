@@ -5,6 +5,7 @@ uploads/*
 !uploads/.gitkeep
 access_cards/*
 !access_cards/.gitkeep
+vendor/
 
 .vscode/
 .idea/

@@ -120,7 +120,7 @@
         <?php endif; ?>
 
         <div class="row g-4">
-            <div class="col-lg-4">
+            <div class="col-12">
                 <div class="card shadow-sm">
                     <div class="card-body">
                         <h2 class="h5 mb-3">Add member</h2>
@@ -179,7 +179,7 @@
                 </div>
             </div>
 
-            <div class="col-lg-8">
+            <div class="col-12">
                 <div class="card shadow-sm">
                     <div class="card-body">
                         <h2 class="h5 mb-3">All members</h2>
@@ -224,14 +224,19 @@
                                                         <span class="text-muted">—</span>
                                                     <?php endif; ?>
                                                 </td>
-                                                <td class="text-end">
-                                                    <a href="edit_member.php?id=<?= htmlspecialchars($member['member_id']) ?>"
-                                                    class="btn btn-sm btn-outline-primary me-1">Edit</a>
+                                                <td class="text-end text-nowrap">
+                                                    <div class="d-inline-flex gap-1">
+                                                        <a href="access_card.php?id=<?= htmlspecialchars($member['member_id']) ?>"
+                                                        class="btn btn-sm btn-outline-success" target="_blank">Card</a>
 
-                                                    <form method="POST" action="delete_member.php" class="d-inline" onsubmit="return confirm('Delete this member?');">
-                                                        <input type="hidden" name="delete_id" value="<?php echo htmlspecialchars($member['member_id']); ?>">
-                                                        <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
-                                                    </form>
+                                                        <a href="edit_member.php?id=<?= htmlspecialchars($member['member_id']) ?>"
+                                                        class="btn btn-sm btn-outline-primary">Edit</a>
+
+                                                        <form method="POST" action="delete_member.php" onsubmit="return confirm('Delete this member?');">
+                                                            <input type="hidden" name="delete_id" value="<?= htmlspecialchars($member['member_id']) ?>">
+                                                            <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                                        </form>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         <?php endforeach; ?>
