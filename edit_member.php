@@ -1,6 +1,7 @@
 <?php
     require_once 'config.php';
     require_once 'auth.php';
+    require_once 'helpers.php';
 
     redirect_if(!isset($_SESSION['admin_id']), 'index.php');
 
@@ -26,12 +27,8 @@
         exit();
     }
 
-    $first_name = $member['first_name'] ?? ''; 
-    $last_name = $member['last_name'] ?? ''; 
-    $email = $member['email'] ?? ''; 
-    $phone_number = $member['phone_number'] ?? ''; 
-    $trainer_id = $member['trainer_id'] ?? ''; 
-    $plan_id = $member['plan_id'] ?? ''; 
+    $validation = validate_member($member);
+    $data = $validation['data'];
     $old_photo_path = $member['photo_path'] ?? NULL; 
 
     $trainers_sql = "SELECT CONCAT(t.first_name,' ',  t.last_name) as trainer_name, t.trainer_id
@@ -46,44 +43,10 @@
     $plans = $result->fetch_all(MYSQLI_ASSOC);
 
     if($_SERVER['REQUEST_METHOD'] == "POST") {
-        $first_name = trim($_POST['first_name'] ?? '');
-        $last_name = trim($_POST['last_name'] ?? '');
-        $email = trim($_POST['email'] ?? '');
-        $phone_number = trim($_POST['phone_number'] ?? '');
-        $trainer_id = (int)($_POST['trainer_id'] ?? '');
-        $plan_id = trim( $_POST['plan_id'] ?? '');
+        $validation = validate_member($_POST);
+        $data = $validation['data'];
+        $errors = array_merge($errors, $validation['errors']);
         $photo = $_FILES['photo'] ?? NULL;
-
-        if($first_name === '') {
-            $errors[] = 'First name is required.';
-        }
-
-        if($last_name === '') {
-            $errors[] = 'Last name is required.';
-        }
-
-        if($email === '') {
-            $errors[] = 'Email is required.';
-        } else if(!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $errors[] = 'Invalid email'; 
-        }
-
-        if($phone_number === '') {
-            $phone_number = NULL;
-        }
-
-        if(!$trainer_id) {
-            $trainer_id = NULL;
-        }
-
-        if ($plan_id === '') {                         
-            $errors[] = 'Training plan is required.';
-        } else {
-            $plan_id = filter_var($plan_id, FILTER_VALIDATE_INT); 
-            if ($plan_id === false) {
-                $errors[] = 'Invalid training plan.';
-            }
-        }
 
         if($photo === NULL || $photo['error'] === UPLOAD_ERR_NO_FILE) {
             $photo = NULL;
@@ -131,7 +94,7 @@
                     SET first_name = ?, last_name = ?, email = ?, phone_number = ?, plan_id = ?, trainer_id = ?, photo_path = ?
                     WHERE member_id = ?";
                     $stmt = $conn->prepare($sql);
-                    $stmt->bind_param('ssssiisi', $first_name, $last_name, $email, $phone_number, $plan_id, $trainer_id, $photo_path,  $member_id);
+                    $stmt->bind_param('ssssiisi', $data['first_name'], $data['last_name'], $data['email'], $data['phone_number'], $data['plan_id'], $data['trainer_id'], $photo_path,  $member_id);
                     $stmt->execute();
         
                     $_SESSION['success_message'] = 'Member updated.';
@@ -194,29 +157,29 @@
                             <div class="mb-3">
                                 <label for="first_name" class="form-label">First name</label>
                                 <input type="text" class="form-control" id="first_name" name="first_name" required
-                                       value="<?php echo htmlspecialchars($first_name); ?>">
+                                       value="<?php echo htmlspecialchars($data['first_name']); ?>">
                             </div>
                             <div class="mb-3">
                                 <label for="last_name" class="form-label">Last name</label>
                                 <input type="text" class="form-control" id="last_name" name="last_name" required
-                                       value="<?php echo htmlspecialchars($last_name); ?>">
+                                       value="<?php echo htmlspecialchars($data['last_name']); ?>">
                             </div>
                             <div class="mb-3">
                                 <label for="email" class="form-label">Email</label>
                                 <input type="email" class="form-control" id="email" name="email" required
-                                       value="<?php echo htmlspecialchars($email); ?>">
+                                       value="<?php echo htmlspecialchars($data['email']); ?>">
                             </div>
                             <div class="mb-3">
                                 <label for="phone_number" class="form-label">Phone number</label>
                                 <input type="tel" class="form-control" id="phone_number" name="phone_number"
-                                       value="<?php echo htmlspecialchars($phone_number ?? ''); ?>">
+                                       value="<?php echo htmlspecialchars($data['phone_number'] ?? ''); ?>">
                             </div>
                             <div class="mb-3">
                                 <label for="plan_id" class="form-label">Training plan</label>
                                 <select class="form-select" id="plan_id" name="plan_id" required>
                                     <?php foreach($plans as $plan): ?>
                                         <option value="<?php echo htmlspecialchars($plan['plan_id']); ?>"
-                                        <?php if ((int)$plan_id === (int)$plan['plan_id']) echo 'selected'; ?>>
+                                        <?php if ((int)$data['plan_id'] === (int)$plan['plan_id']) echo 'selected'; ?>>
                                         <?php echo htmlspecialchars($plan['name']); ?></option>
                                     <?php endforeach; ?>
                                 </select>
@@ -227,7 +190,7 @@
                                     <option value="">No trainer</option>
                                     <?php foreach($trainers as $trainer): ?>
                                         <option value="<?php echo htmlspecialchars($trainer['trainer_id']); ?>"
-                                        <?php if (isset($trainer_id) && (int)$trainer_id === (int)$trainer['trainer_id']) echo 'selected'; ?>>
+                                        <?php if (isset($data['trainer_id']) && (int)$data['trainer_id'] === (int)$trainer['trainer_id']) echo 'selected'; ?>>
                                         <?php echo htmlspecialchars($trainer['trainer_name']); ?></option>
                                     <?php endforeach; ?>
                                 </select>
@@ -240,7 +203,7 @@
                                     <div class="d-flex align-items-center gap-3 mb-2">
                                         <img src="<?= htmlspecialchars($old_photo_path) ?>"
                                             width="64" height="64" class="rounded object-fit-cover"
-                                            alt="<?= htmlspecialchars($first_name) ?>">
+                                            alt="<?= htmlspecialchars($data['first_name']) ?>">
                                         <span class="text-muted small">Current photo</span>
                                     </div>
                                 <?php endif; ?>
