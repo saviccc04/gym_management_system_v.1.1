@@ -26,49 +26,21 @@
 
     if($_SERVER['REQUEST_METHOD'] == "POST") {
         $validation = validate_member($_POST);
+        $validation_photo = validate_photo($_FILES);
+
         $data = $validation['data']; 
-        $errors = array_merge($errors, $validation['errors']); 
-        $photo = $_FILES['photo'] ?? NULL;
-
+        $photo_data = $validation_photo['data'];
+        $errors = array_merge($errors, $validation['errors'], $validation_photo['errors']); 
         
-
-        if($photo === NULL || $photo['error'] === UPLOAD_ERR_NO_FILE) {
-            $photo = NULL;
-        }
-
-        if($photo !== NULL) {
-            if($photo['error'] !== UPLOAD_ERR_OK) {
-                $errors[] = 'Photo upload failed.';
-            } else if($photo['size'] > 2 * 1024 * 1024) {
-                $errors[] = 'Photo must be 2 MB or smaller.';
-            } else {
-                $finfo = new finfo(FILEINFO_MIME_TYPE);
-                $actual_mime_type = $finfo->file($photo['tmp_name']); 
-
-                $allowed_types = [
-                    'image/jpeg' => 'jpg',
-                    'image/png' => 'png',
-                    'image/webp' => 'webp'
-                ];
-    
-    
-                if(!isset($allowed_types[$actual_mime_type])) {
-                    $errors[] = 'Photo must be JPG, PNG or WEBP.';
-                }
-            }
-        }
-
-
-
         if(empty($errors)) {
             $photo_path = NULL;
 
-            if($photo !== NULL) {
-                $extension = isset($allowed_types[$actual_mime_type]) ? $allowed_types[$actual_mime_type] : '' ;
+            if($photo_data['photo'] !== NULL) {
+                $extension = isset($validation_photo['allowed_types']) ? $validation_photo['allowed_types'] : '' ;
                 $photo_name = bin2hex(random_bytes(16)) . "." . $extension;
                 $photo_path = 'uploads/' . $photo_name;
     
-                if(!move_uploaded_file($photo['tmp_name'], $photo_path)) {
+                if(!move_uploaded_file($photo_data['photo']['tmp_name'], $photo_path)) {
                     $errors[] = 'Something went wrong.'; 
                 }
             }

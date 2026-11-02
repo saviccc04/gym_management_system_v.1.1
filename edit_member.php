@@ -99,7 +99,7 @@
         
                     $_SESSION['success_message'] = 'Member updated.';
 
-                    if($old_photo_path !== NULL && file_exists($old_photo_path)) {
+                    if($new_photo_path !== NULL && $old_photo_path !== NULL && file_exists($old_photo_path)) {
                         unlink($old_photo_path);
                     }
     

@@ -55,3 +55,37 @@ function validate_member(array $input): array {
 
     return ['data' => $data, 'errors' => $errors];
 }
+
+function validate_photo(array $input): array {
+    $errors = [];
+    $data = [];
+
+    $data['photo'] = $input['photo'] ?? NULL;
+
+    if($data['photo'] === NULL || $data['photo']['error'] === UPLOAD_ERR_NO_FILE) {
+        $data['photo'] = NULL;
+    }
+
+    if($data['photo'] !== NULL) {
+        if($data['photo']['error'] !== UPLOAD_ERR_OK) {
+            $errors[] = 'Photo upload failed.';
+        } else if($data['photo']['size'] > 2 * 1024 * 1024) {
+                $errors[] = 'Photo must be 2 MB or smaller.';
+        } else {
+            $finfo = new finfo(FILEINFO_MIME_TYPE);
+            $actual_mime_type = $finfo->file($data['photo']['tmp_name']); 
+
+            $allowed_types = [
+                'image/jpeg' => 'jpg',
+                'image/png' => 'png',
+                'image/webp' => 'webp'
+            ];
+    
+            if(!isset($allowed_types[$actual_mime_type])) {
+                $errors[] = 'Photo must be JPG, PNG or WEBP.';
+            }
+        }
+    }
+
+    return ['errors' => $errors, 'data' => $data, 'allowed_types' => $allowed_types[$actual_mime_type]];
+}
